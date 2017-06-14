@@ -1,5 +1,5 @@
-#ifndef CAVIARMODEL_H
-#define CAVIARMODEL_H
+#ifndef MEQTLPOLYGMODEL_H
+#define MEQTLPOLYGMODEL_H
 
 #include <iostream>
 #include <fstream>
@@ -19,7 +19,7 @@ using namespace std;
 using namespace arma;
 
  
-class CaviarModel{
+class MeQTLPolyGModel{
 	
 public:
 	double rho;
@@ -45,13 +45,13 @@ public:
         int number;
         string covariate;
         vector<string> grm_file;
-	CaviarModel(string ldFile, string yFile, string outputFileName, int totalCausalSNP,double rho,bool histFlag,double gamma,string  weight, int nthread,string covariate, vector<string> grm_file,string X_file, int number )           {
+	MeQTLPolyGModel(string yFile, string outputFileName, int totalCausalSNP,double rho,bool histFlag,double gamma,string  weight, int nthread,string covariate, vector<string> grm_file,string X_file, int number )           {
                 cout<<"Get into CaviarModel"<<endl;
 		int tmpSize = 0;
 		this->histFlag = histFlag;
 		this->rho = rho;
 		this->gamma = gamma;
-		this->ldFile = ldFile;
+		
 		this->yFile  = yFile;
 		this->outputFileName = outputFileName;
 		this->totalCausalSNP = totalCausalSNP;
@@ -100,14 +100,14 @@ public:
                    stat_for_peak[i]=stat[i];
                  }
                 cout<<"Get peak signal"<<endl;
-                calculate_stat(stat_for_peak,X,peak_index);
+                calculate_stat(stat_for_peak,X,peak_index);//Performing association analysis to find the peak signal, without controling for population structure or relatedness
                 
                 cout<<"peak_index is: "<<peak_index<<endl;
-               // calculate_stat(stat,X);
+                //When grm files are applied, the polygenic background was adjusted by estimated variance components
                 if(grm_file.size()!=0)
                  {
                    importgrm(grm_file, grm, number);
-            //       peak_index=9;
+            
                    cout<<"Output genotype"<<endl;
                    cout<<"***********************************"<<endl;
                    cout<<"X is: "<<X<<endl; 
@@ -122,24 +122,10 @@ public:
                        remove_poly(stat,grm,X,peak_geno);
                      }
                  }
-                for(int i=0;i<number;i++)
-                 {
-                   stat_for_peak[i]=stat[i];
-                 }
-                cout<<"Get peak signal after removing polygenic effect"<<endl;
-                calculate_stat(stat_for_peak,X,peak_index);
-
-                cout<<"Remove polygenetic influence is finished"<<endl;
-             //   int peak_index=calculate_stat(stat,X);
-             //   if(covariate!="")
-             //    {
-             //      post = new PostCal(&sigma, &stat_snp, snpCount, totalCausalSNP, &snpNames, gamma,nthread,cov); 
-             //    } 
-             //   else
-             //    {
+      
 		   post = new PostCal(sigma, stat, snpCount, totalCausalSNP, snpNames, gamma, nthread,number, X);
-             //    }
 	}
+	//perform standard linear regression to calcuate Z-score for each explored variants
         void calculate_stat(double *stat, mat & X, int &peak)
          {
             cout<<"Come to get the peak signal"<<endl;
@@ -198,16 +184,12 @@ public:
          //   int peak=0;
             cout<<"beta value is: "<<beta<<endl;
             double peak_signal=0;
-          //  vec nodeData = stat_test.col(0);
-          //  cout<<"vec is: "<<vec<<endl;
-          //  double phe_variance=stddev(nodeData, 0);
-         //   double  phe_variance=stddev(stat_test.col(0));
-          //  cout<<"phe_variance is: "<<phe_variance<<endl;
+          
             for(int i=0;i<snpCount;i++)
              {
                
                stat[i]=beta(i,0);
-               cout<<"z_score is: "<<stat[i]<<endl;
+              
                if(abs(stat[i])>peak_signal)
                 {
                   peak=i;
@@ -216,8 +198,9 @@ public:
              }
             cout<<"peak_signal is: "<<peak_signal<<endl;
             cout<<"peak is: "<<peak<<endl;
-        //    return peak;
+   
          }
+	//import genotype information. The genotype was centered by minus mean, and for missing genotype, it is set to be 0.
         void import_geno(string & X_file, mat & X)
          {
            ifstream fin(X_file.c_str(), std::ifstream::in);
@@ -285,7 +268,7 @@ public:
      
    //return 0;
   }
-         
+         //read grm files
         void importgrm(vector<string> &grm_file, vector<mat> &grm, int N)
          {
            int index = 0;
@@ -322,6 +305,7 @@ public:
             }
          //  return(1);
          }
+	//import covariate information, and right now, it is not used.
          int importcov(string &cov_file, mat &cov)
          {
          //  cout<<"file is: "<<file<<endl;
@@ -352,6 +336,7 @@ public:
                }
            return(1);
          }
+	//used to extract variant names in the first row of genotype file
        void importDataFirstRow(string fileName, string * list)
         {
           int index = 0;
@@ -371,7 +356,10 @@ public:
         cout << "FINISH" << endl;
         fin.close();
         }
-       void remove_poly(double *stat_ori, vector<mat> &grm , mat &X_all, mat &X)
+	//With the applied genotype, phenotype, and grm files, the variance component is firstly estimated with REML, and then transforming phenotype and genotype by multiplying squared root of covariance matrix.
+        //After transformation, the covariance matrix of phenotype will be a standard multivariate normal distribution
+	//This function is adaped from Gusev R code
+	void remove_poly(double *stat_ori, vector<mat> &grm , mat &X_all, mat &X)
          {
            int r=grm.size()+1;
            mat Var=mat(r,1,fill::zeros);
@@ -427,14 +415,7 @@ public:
            mat VinvX=Vinv*X;
            mat pinv_Xt_Vinv_X=pinv(trans(X)*Vinv*X);
            mat Xt_Vinv=trans(X)*Vinv;
-           cout<<"output sub-part of hat matrix: "<<endl;
-           cout<<"*******************************************************"<<endl;
-           cout<<"X is: "<<X<<endl;
-           cout<<"VinvX is: "<<VinvX<<endl;
-           cout<<"pinv_Xt_Vinv_X is: "<<pinv_Xt_Vinv_X<<endl;
-
-           cout<<"Xt_Vinv is: "<<Xt_Vinv<<endl;
-
+           c
            mat P =Vinv-Vinv*X*pinv(trans(X)*Vinv*X)*trans(X)*Vinv;
            cout<<"hat matrix P is: "<<P<<endl;
         //   cout<<"Here is OK6"<<endl;
@@ -614,6 +595,8 @@ public:
          //     stat_ori[i]=stat(i,0);
          //   }
          }
+	//When external information for causal variants are applied, like ENCODE annotation or evolution score, extract the information as weight 
+	//as prior.
         void extract_weight(string weight, map<int,double>& Weight)
           {
             string line = "";
@@ -632,9 +615,11 @@ public:
                Weight.insert(map<int, double>::value_type(index, weight));
              } 
           }
+	//This function is adapted from CAVIAR package, and changed to handle the individuals genotype data instead of summary results.
 	void run() {
         	post->findOptimalSetGreedy(stat, configure, rank, rho, Weight, nthread);
 	}
+	//This function is same as in CAVIAR package, and is used to extract PIP score
 	void finishUp() {
                 string outFileNameSet = string(outputFileName)+"_set";
                 ofstream outputFile;
@@ -647,7 +632,7 @@ public:
                 if(histFlag)
                 	post->printHist2File(string(outputFileName)+"_hist");
 	}
-        ~CaviarModel() {
+        ~MeQTLPolyGModel() {
 	}
 
 };
