@@ -1,3 +1,8 @@
+//Adapted from CAVIAR function with some changes to run in parallel, and use individuals genotype information instead of summary results.
+
+
+
+
 #ifndef POSTCAL_H
 #define POSTCAL_H
 
