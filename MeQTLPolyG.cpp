@@ -19,17 +19,17 @@ int main( int argc, char *argv[]  ){
 	double rho = 0.95;
 	bool histFlag = false;
 	int oc = 0;	
-	string ldFile = "";
+	
 	string yFile  = "";
 	string outputFileName = "";
 	string geneMapFile = "";	
         string weight = "";
         string covariate = "";
         string grm_test ="";
-        vector<string> grm_file;
-        string X_file="";
+        vector<string> grm_file;//grm files used for variance component estimation, multiple grm files can be supplied
+        string X_file="";//Genotype file, which should contain variant names as column name.
         int number;
-        int nthread=1;
+        int nthread=1;//the number of threads to use when running the package in parallel manner.
 	while ((oc = getopt(argc, argv, "vhl:t:o:x:p:n:w:g:r:c:G:w:f:")) != -1) {
 		switch (oc) {
 			case 'v':
@@ -51,9 +51,7 @@ int main( int argc, char *argv[]  ){
                                 cout << "-x genotype information,       genotype file for explored variants" << endl;
                                 cout << "-t threads to use, --nthread       set the threads to use" << endl;
 				exit(0);
-			case 'l':
-				ldFile = string(optarg);
-				break;
+			
                         case 'n':
                                 number = atoi(optarg);
                                 break;
@@ -98,8 +96,8 @@ int main( int argc, char *argv[]  ){
 		}
 	}
         cout<<"Getting parameter information is over"<<endl;
-        CaviarModel caviar(ldFile, yFile, outputFileName, totalCausalSNP,rho, histFlag, gamma,weight, nthread,covariate, grm_file,X_file, number);
-	caviar.run();
-	caviar.finishUp();		
+        MeQTLPolyGModel MeQTLPolyG(yFile, outputFileName, totalCausalSNP,rho, histFlag, gamma,weight, nthread,covariate, grm_file,X_file, number);
+	MeQTLPolyG.run();
+	MeQTLPolyG.finishUp();		
 	return 0;
 }
