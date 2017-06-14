@@ -24,6 +24,7 @@ string PostCal::convertConfig2String(int * config, int size) {
 			result+= "_" + convertInt(i);
 	return result;
 }
+//calculate the probability of causal states with individuals genotype information in a Bayesian model
 double PostCal::likelihood(int * configure_x) {
 	int causalCount = 0;
 	int index_C = 0;
@@ -59,6 +60,7 @@ double PostCal::likelihood(int * configure_x) {
          }
         vector<double> test;
         vector<double> test_tmplogDet;
+	//Multiple value of variance of causal variant effect size were used, and integrated out by weighting.
         double start=0.2;
         double end=0.8;
         double win=0.1;
@@ -80,7 +82,7 @@ double PostCal::likelihood(int * configure_x) {
                 {
                   s2+=residuals(i_x,0)*residuals(i_x,0);
                 }
-               s2/=number;
+               s2/=number;//estimate the variance of estimation for beta, namely, var(beta)
        //        cout<<"s2 is: "<<s2<<endl;
              mat eVb=xy/sqrt(s2);
        //     cout<<"eVb is: "<<eVb<<endl;
@@ -108,7 +110,7 @@ double PostCal::likelihood(int * configure_x) {
    //   cout<<"res is: "<<test_t<<endl;	
       return(res/int(1+(end-start)/win));
 }
-
+//creat causal states for the explored variants, adapted from CAVIAR function
 int PostCal::nextBinary(int * data, int size) {
 	int i = 0;
 	int total_one = 0;	
@@ -163,6 +165,7 @@ int PostCal::nextBinary(int * data, int size) {
 	
 	return(total_one);		
 }
+//Each causal state was presented as a string, this function decomposites it to a value. In current application, it is not used.
 int PostCal::decomp(vector<int> &str, int *data, int num)
   {
            int init_start = 0;
@@ -231,6 +234,7 @@ string PostCal::convert_symbol(int  *data, int num,vector<int> &output)
      }
     return str;
   }
+//adapted from CAVIAR package, and can run in parallel applying openMP library
 double PostCal::computeTotalLikelihood(double * stat,map<int,double>& Weight, int nthread) {	
 	double sumLikelihood = 0;
 	double tmp_likelihood = 0;
@@ -369,6 +373,7 @@ double PostCal::computeTotalLikelihood(double * stat,map<int,double>& Weight, in
         free(configure);
         return(sumLikelihood);
 }
+//Same as in CAVIAR function, and was used to calcuate posterior inclusion probability
 double PostCal::findOptimalSetGreedy(double * stat, char * configure, int *rank,  double inputRho, map<int, double>& Weight, int nthread) {
 	int index = 0;
         double rho = 0;
