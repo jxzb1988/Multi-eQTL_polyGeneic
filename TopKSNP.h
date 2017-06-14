@@ -1,3 +1,5 @@
+//Codes copied from CAVIAR package
+
 #ifndef TOPKSNP_H
 #define TOPKSNP_H
 
