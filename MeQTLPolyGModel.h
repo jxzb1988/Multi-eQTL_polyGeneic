@@ -29,13 +29,11 @@ public:
 	int totalCausalSNP;
 	double * sigma;
         double * stat;
-        double * stat_snp;
         char * configure;
         int * rank;
         bool histFlag;
 	PostCal * post;
 	string * snpNames;
-	string ldFile;
         string yFile;
         string outputFileName;
         string geneMapFile;	
@@ -62,19 +60,22 @@ public:
                 this->number        =number;
                 vector<mat> grm;
                 mat cov;
-                cout<<"Come to creat mat X"<<endl;
-                cout<<"number is: "<<number<<endl;
+            //    cout<<"Come to creat mat X"<<endl;
+              //  cout<<"number is: "<<number<<endl;
              //   cout<<"snpCount is: "<<snpCount<<endl;
              //   mat X=mat(number, snpCount, fill::zeros);
              //   import_geno(X_file,X);
              //   cout<<"X is: "<<X<<endl;
-		fileSize(ldFile, tmpSize);
-	        snpCount = (int)sqrt(tmpSize);
-                mat X=mat(number, snpCount, fill::zeros);
+	      	fileSize(ldFile, tmpSize);
+		snpCount = (int)sqrt(tmpSize);
+		mat X=mat(number, snpCount, fill::zeros);
+		import_geno(X_file,X);
+	        
+                
                 cout<<"snpCount is: "<<snpCount<<endl;
                 cout<<"number is: "<<number<<endl;
                 //cout<<"X is: "<<X<<endl;
-                import_geno(X_file,X);
+               
                 cout<<"Extracting genotyp is over"<<endl;
          	sigma     = new double[snpCount * snpCount];
 		stat      = new double[number];
